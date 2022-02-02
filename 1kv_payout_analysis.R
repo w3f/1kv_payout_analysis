@@ -26,6 +26,11 @@ validators <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exp
 validators_next <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", current_era + 1, ".csv", sep=(""))),stringsAsFactors = FALSE)
 validator_rewards <- validators_next$validator_rewards_previous_era[1]
 
+# Normalize values to DOT / KSM
+validators$self_stake <- validators$self_stake*normalization
+validators$total_stake <- validators$total_stake*normalization
+validator_rewards <- validator_rewards*normalization
+
 # Only take active validators
 validators <- subset(validators, active==1)
 
@@ -71,10 +76,15 @@ df <- tibble(
   validators_use$name, validators_use$commission_percent, validators_use$self_stake, validators_use$total_stake, validators_use$era_points, validators_use$our_stash,
   val = decode(validators_use$stakers), 
   to_sum = list(kusama_1kv_stash), 
-  our_stake = map2_dbl(val, to_sum, sum_these)
+  our_stake = map2_dbl(val, to_sum, sum_these)*normalization
 )
 
 # TO-DO Payoff Analysis
+
+
+# Create final data table
+df_output <- subset(df, select=c(`validators_use$name`,`validators_use$commission_percent`,`validators_use$self_stake`,`validators_use$era_points`,`validators_use$our_stash`, our_stake))
+write.csv(df_output, 'output.csv')
 
 
 
