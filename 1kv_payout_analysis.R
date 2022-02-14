@@ -1,6 +1,6 @@
 # title: "1kv Payout Analysis"
 # author: "Jonas Gehrlein @ Web3 Foundation"
-# date: 31/01/2022
+# date: 14/02/2022
 
 library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
@@ -61,6 +61,7 @@ sum_these <- function(df1, to_sum1) {
 # Set counter variable
 validators$votes_of_1kv <- 0
 validators$our_stash <- "none"
+validators$our_stash_name <- "none"
 
 # Loop to determine if one of the stash addresses is among the stakers, which essentially means that the validator is in 1kv
 for(i in 1:nrow(validators)){
@@ -69,6 +70,7 @@ for(i in 1:nrow(validators)){
     if(find==TRUE){
       validators$votes_of_1kv[i] <- validators$votes_of_1kv[i] + 1
       validators$our_stash[i] <- stash_1kv[x]
+      validators$our_stash_name[i] <- names_1kv[x]
     }
   }
 }
@@ -78,18 +80,18 @@ validators_use <- subset(validators, votes_of_1kv>=1)
 
 # Generate dataset which extracts the amount of our stake with the validator. In the case that more 1kv-stashes stake with a validator, we take the sum (this might never be the case)
 df <- tibble(
-  validators_use$name, validators_use$commission_percent, validators_use$self_stake, validators_use$total_stake, validators_use$era_points, validators_use$our_stash,
+  validators_use$stash_address, validators_use$name, validators_use$commission_percent, validators_use$self_stake, validators_use$total_stake, validators_use$era_points, validators_use$our_stash, validators_use$our_stash_name,
   val = decode(validators_use$stakers), 
   to_sum = list(stash_1kv), 
   our_stake = map2_dbl(val, to_sum, sum_these)*normalization
 )
 
-# TO-DO Payoff Analysis
-
-
 # Create final data table
-df_output <- subset(df, select=c(`validators_use$name`,`validators_use$commission_percent`,`validators_use$self_stake`,`validators_use$era_points`,`validators_use$our_stash`, our_stake))
+df_output <- subset(df, select=c(`validators_use$stash_address`, `validators_use$name`,`validators_use$commission_percent`,`validators_use$total_stake`, `validators_use$self_stake`,`validators_use$era_points`,`validators_use$our_stash`, our_stake,`validators_use$our_stash_name`))
+colnames(df_output) <- c('stash_address', 'name', 'commission', 'total_stake', 'self_stake', 'era_points', 'our_stash', 'our_stake', 'our_stash_name')
+
+# Calculate payoff
+df_output$our_payoff <- (df_output$era_points / sum(subset(validators, active==1)$era_points)) * validator_rewards * (100-df_output$commission) * (df_output$our_stake / df_output$total_stake)
+
 write.csv(df_output, 'output.csv')
-
-
 
