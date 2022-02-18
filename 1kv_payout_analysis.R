@@ -1,6 +1,6 @@
 # title: "1kv Payout Analysis"
 # author: "Jonas Gehrlein @ Web3 Foundation"
-# date: 14/02/2022
+# date: 18/02/2022
 
 library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
