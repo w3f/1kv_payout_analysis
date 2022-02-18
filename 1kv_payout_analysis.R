@@ -6,7 +6,7 @@ library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
 chain = "kusama"
 # Current era - 1 as the data is written at the end of an era
-current_era = 3302
+current_era = 3366
 
 
 
@@ -95,4 +95,7 @@ df_output$our_payoff <- (df_output$era_points / sum(subset(validators, active==1
 # Calculate overall payoff per validator
 df_output$validator_payoff <- (df_output$era_points / sum(subset(validators, active==1)$era_points)) * validator_rewards
 write.csv(df_output, 'output.csv')
+
+df_aggregate <- aggregate(df_output$our_payoff, by=list(df_output$our_stash), FUN=sum)
+
 
