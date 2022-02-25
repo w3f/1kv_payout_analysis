@@ -21,6 +21,22 @@ if(chain=="polkadot"){
   names_1kv <- c("1kv-stash-1", "1kv-stash-2", "1kv-stash-3")
 }
 
+decode <- function(code) {
+  # return a list of data frames for the decoded string vector code
+  code %>% 
+    str_split(",") %>% 
+    map(str_split, ";", simplify = TRUE) %>% 
+    map(as.data.frame) %>% 
+    map(set_names, c("name", "value")) %>%
+    map(~mutate_all(.,as.character)) %>%
+    map(mutate, value = as.numeric(value))
+}
+
+sum_these <- function(df1, to_sum1) {
+  # for one data frame of name, value (df1), sum the values for name in to_sum1
+  df1 %>% filter(name %in% to_sum1) %>% pull(value) %>% as.numeric() %>% sum()
+}
+
 # Define the 1kv Stashes
 
 info_1kv <- data.frame(stash_1kv, names_1kv)
@@ -90,21 +106,6 @@ for(i in 1:length(x)) {
   } else {
     df_total_output <- rbind(df_total_output, df_output)
     df_total_aggregate <- rbind(df_total_aggregate, df_aggregate)
-  }
-  decode <- function(code) {
-    # return a list of data frames for the decoded string vector code
-    code %>% 
-      str_split(",") %>% 
-      map(str_split, ";", simplify = TRUE) %>% 
-      map(as.data.frame) %>% 
-      map(set_names, c("name", "value")) %>%
-      map(~mutate_all(.,as.character)) %>%
-      map(mutate, value = as.numeric(value))
-  }
-  
-  sum_these <- function(df1, to_sum1) {
-    # for one data frame of name, value (df1), sum the values for name in to_sum1
-    df1 %>% filter(name %in% to_sum1) %>% pull(value) %>% as.numeric() %>% sum()
   }
 }
 df_final <- aggregate(df_total_output$our_payoff, by=list(df_total_output$stash_address), FUN=sum)
