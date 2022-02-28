@@ -118,7 +118,7 @@ summary_validators <- df_total_output %>%
   summarise(sum(our_payoff), mean(era_points), sum(active), sum(validator_payoff))
 
 # Aggregate our payouts per stashes
-summary_our_stashes <- aggregate(df_total_aggregate$x, by=list(df_total_aggregate$Group.1), FUN=sum))
+summary_our_stashes <- aggregate(df_total_aggregate$x, by=list(df_total_aggregate$Group.1), FUN=sum)
 
 write.csv(summary_our_stashes, 'summary_our_stashes.csv')
 write.csv(summary_validators, 'summary_validators.csv')
