@@ -46,8 +46,8 @@ x = c(current_era:(current_era - difference))
 # Loop through Era data at the end point. If one era is missing, it uses the one from before to fill the gap. That means, at least the first era needs to be non-missing.
 for(i in 1:length(x)) {
   tryCatch(
-    validators <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", current_era, ".csv", sep=(""))),stringsAsFactors = FALSE),
-    validators_next <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", current_era + 1, ".csv", sep=(""))),stringsAsFactors = FALSE),
+    validators <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=(""))),stringsAsFactors = FALSE),
+    validators_next <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i] + 1, ".csv", sep=(""))),stringsAsFactors = FALSE),
     error = function(e){
       print("There was an Error")
       missing_validator <<- missing_validator + 1
@@ -72,12 +72,12 @@ for(i in 1:length(x)) {
   
   # Loop to determine if one of the stash addresses is among the stakers, which essentially means that the validator is in 1kv
   for(t in 1:nrow(validators)){
-    for(x in 1:length(stash_1kv)){
-      find <- grepl(info_1kv$stash_1kv[x], validators$stakers[t])
+    for(y in 1:length(stash_1kv)){
+      find <- grepl(info_1kv$stash_1kv[y], validators$stakers[t])
       if(find==TRUE){
         validators$votes_of_1kv[t] <- validators$votes_of_1kv[t] + 1
-        validators$our_stash[t] <- stash_1kv[x]
-        validators$our_stash_name[t] <- names_1kv[x]
+        validators$our_stash[t] <- stash_1kv[y]
+        validators$our_stash_name[t] <- names_1kv[y]
       }
     }
   }
@@ -110,6 +110,10 @@ for(i in 1:length(x)) {
 }
 df_final <- aggregate(df_total_output$our_payoff, by=list(df_total_output$stash_address), FUN=sum)
 
+# Add a counter variable to later check how many times a validator was active
+df_total_output$active <- 1
+df_final <- df_total_output %>% 
+  group_by(name, stash_address) %>% 
+  summarise(sum(our_payoff), mean(era_points), sum(active))
 
-
-
+write.csv(df_final, 'final_output.csv')
