@@ -108,12 +108,17 @@ for(i in 1:length(x)) {
     df_total_aggregate <- rbind(df_total_aggregate, df_aggregate)
   }
 }
-df_final <- aggregate(df_total_output$our_payoff, by=list(df_total_output$stash_address), FUN=sum)
 
 # Add a counter variable to later check how many times a validator was active
 df_total_output$active <- 1
-df_final <- df_total_output %>% 
+
+# Aggregate on validator level. We use average of era points per validator and sum of our payouts.
+summary_validators <- df_total_output %>% 
   group_by(name, stash_address) %>% 
   summarise(sum(our_payoff), mean(era_points), sum(active), sum(validator_payoff))
 
-write.csv(df_final, 'final_output.csv')
+# Aggregate our payouts per stashes
+summary_our_stashes <- aggregate(df_total_aggregate$x, by=list(df_total_aggregate$Group.1), FUN=sum))
+
+write.csv(summary_our_stashes, 'summary_our_stashes.csv')
+write.csv(summary_validators, 'summary_validators.csv')
