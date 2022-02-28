@@ -98,6 +98,7 @@ for(i in 1:length(x)) {
   df_output$our_payoff <- (df_output$era_points / sum(subset(validators, active==1)$era_points)) * validator_rewards * ((100-df_output$commission)/100) * (df_output$our_stake / df_output$total_stake)
   # Calculate overall payoff per validator
   df_output$validator_payoff <- (df_output$era_points / sum(subset(validators, active==1)$era_points)) * validator_rewards
+  
   df_aggregate <- aggregate(df_output$our_payoff, by=list(df_output$our_stash), FUN=sum)
   
   if(i==1){
@@ -115,7 +116,7 @@ df_total_output$active <- 1
 # Aggregate on validator level. We use average of era points per validator and sum of our payouts.
 summary_validators <- df_total_output %>% 
   group_by(name, stash_address) %>% 
-  summarise(sum(our_payoff), mean(era_points), sum(active), sum(validator_payoff))
+  summarise(sum(self_stake), sum(our_stake), sum(total_stake), sum(our_payoff), sum(validator_payoff), mean(era_points), sum(active))
 
 # Aggregate our payouts per stashes
 summary_our_stashes <- aggregate(df_total_aggregate$x, by=list(df_total_aggregate$Group.1), FUN=sum)
