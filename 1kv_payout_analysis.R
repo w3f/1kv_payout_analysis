@@ -1,6 +1,6 @@
 # title: "1kv Payout Analysis"
 # author: "Jonas Gehrlein @ Web3 Foundation"
-# date: 18/02/2022
+# date: 28/02/2022
 
 library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
@@ -114,6 +114,6 @@ df_final <- aggregate(df_total_output$our_payoff, by=list(df_total_output$stash_
 df_total_output$active <- 1
 df_final <- df_total_output %>% 
   group_by(name, stash_address) %>% 
-  summarise(sum(our_payoff), mean(era_points), sum(active))
+  summarise(sum(our_payoff), mean(era_points), sum(active), sum(validator_payoff))
 
 write.csv(df_final, 'final_output.csv')
