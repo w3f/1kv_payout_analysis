@@ -6,9 +6,9 @@ library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
 chain = "kusama"
 # Current era - 1 as the data is written at the end of an era
-current_era = 3397
+current_era = 3399
 
-first_era = 3399
+first_era = 3397
 
 
 if(chain=="polkadot"){
