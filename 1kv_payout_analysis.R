@@ -1,6 +1,6 @@
 # title: "1kv Payout Analysis"
 # author: "Jonas Gehrlein @ Web3 Foundation"
-# date: 02/03/2022
+# date: 08/03/2022
 
 library(tidyverse)
 # Specify chain: either "polkadot" or "kusama"
@@ -99,6 +99,13 @@ for(i in 1:length(x)) {
   df_output$total_payoff <- (df_output$era_points / sum(subset(validators, active==1)$era_points)) * validator_rewards
   df_aggregate <- aggregate(df_output$our_payoff, by=list(df_output$our_stash), FUN=sum)
   
+  df_aggregate <- df_output %>%
+    group_by(our_stash, our_stash_name) %>%
+    summarise(sum(our_payoff), sum(our_stake))
+
+  colnames(df_aggregate) <- c("our_stash", "our_stash_name", "our_payoff", "our_stake")
+  df_aggregate <- subset(df_aggregate, select = c(our_stash_name, our_stash, our_stake, our_payoff))
+  
   if(i==1){
     df_total_output <- df_output
     df_total_aggregate <- df_aggregate
@@ -117,7 +124,10 @@ summary_validators <- df_total_output %>%
   summarise(sum(self_stake), sum(our_stake), sum(total_stake), sum(our_payoff), sum(total_payoff), mean(era_points), sum(active))
 
 # Aggregate our payouts per stashes
-summary_our_stashes <- aggregate(df_total_aggregate$x, by=list(df_total_aggregate$Group.1), FUN=sum)
+summary_our_stashes <- df_total_aggregate %>%
+  group_by(our_stash, our_stash_name) %>%
+  summarise(sum(our_payoff), sum(our_stake))
+colnames(summary_our_stashes) <- c("our_stash", "our_stash_name", "our_payoff", "our_stake")
 
 write.csv(summary_our_stashes, 'summary_our_stashes.csv')
 write.csv(summary_validators, 'summary_validators.csv')
