@@ -3,6 +3,8 @@
 # date: 09/03/2022
 
 library(tidyverse)
+library(RCurl)
+
 # Specify chain: either "polkadot" or "kusama"
 chain = "kusama"
 # Current era - 1 as the data is written at the end of an era
@@ -38,19 +40,21 @@ sum_these <- function(df1, to_sum1) {
 # Define the 1kv Stashes
 
 info_1kv <- data.frame(stash_1kv, names_1kv)
-
+abort <- FALSE
 difference = current_era - first_era
 x = c(current_era:(current_era - difference))
 # Loop through Era data at the end point. If one era is missing, it uses the one from before to fill the gap. That means, at least the first era needs to be non-missing.
 for(i in 1:length(x)) {
-  tryCatch(
-    validators <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=("")),stringsAsFactors = FALSE),
-    validators_next <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i] + 1, ".csv", sep=("")),stringsAsFactors = FALSE),
-    error = function(e){
-      print("There was an Error")
-      missing_validator <<- missing_validator + 1
-      validators$era <<- validators$era + 1
-    })
+  # Check if the data set exists
+  exists <- url.exists(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=("")))
+  # If at least one data set does not exist, we want to terminate
+  if(exists == FALSE){
+    abort <<- TRUE
+    break
+  }
+
+  validators <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=("")),stringsAsFactors = FALSE)
+  validators_next <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i] + 1, ".csv", sep=("")),stringsAsFactors = FALSE)
   validator_rewards <- validators_next$validator_rewards_previous_era[1]
   # Normalize values to DOT / KSM
   validators$self_stake <- validators$self_stake*normalization
@@ -115,19 +119,23 @@ for(i in 1:length(x)) {
   }
 }
 
-# Add a counter variable to later check how many times a validator was active
-df_total_output$active <- 1
-
-# Aggregate on validator level. We use average of era points per validator and sum of our payouts.
-summary_validators <- df_total_output %>% 
-  group_by(name, stash_address) %>% 
-  summarise(mean(self_stake), mean(our_stake), mean(total_stake), sum(our_payoff), sum(total_payoff), mean(era_points), sum(active))
-
-# Aggregate our payouts per stashes
-summary_our_stashes <- df_total_aggregate %>%
-  group_by(our_stash, our_stash_name) %>%
-  summarise(sum(our_payoff), mean(our_stake))
-colnames(summary_our_stashes) <- c("our_stash", "our_stash_name", "our_payoff", "our_stake")
-
-write.csv(summary_our_stashes, 'summary_our_stashes.csv')
-write.csv(summary_validators, 'summary_validators.csv')
+if(abort == FALSE){
+  # Add a counter variable to later check how many times a validator was active
+  df_total_output$active <- 1
+  
+  # Aggregate on validator level. We use average of era points per validator and sum of our payouts.
+  summary_validators <- df_total_output %>% 
+    group_by(name, stash_address) %>% 
+    summarise(mean(self_stake), mean(our_stake), mean(total_stake), sum(our_payoff), sum(total_payoff), mean(era_points), sum(active))
+  
+  # Aggregate our payouts per stashes
+  summary_our_stashes <- df_total_aggregate %>%
+    group_by(our_stash, our_stash_name) %>%
+    summarise(sum(our_payoff), mean(our_stake))
+  colnames(summary_our_stashes) <- c("our_stash", "our_stash_name", "our_payoff", "our_stake")
+  
+  write.csv(summary_our_stashes, 'summary_our_stashes.csv')
+  write.csv(summary_validators, 'summary_validators.csv')
+} else{
+  print(paste("Script terminated because at least Era:", x[i], "is missing"))
+}
