@@ -44,8 +44,8 @@ x = c(current_era:(current_era - difference))
 # Loop through Era data at the end point. If one era is missing, it uses the one from before to fill the gap. That means, at least the first era needs to be non-missing.
 for(i in 1:length(x)) {
   tryCatch(
-    validators <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=(""))),stringsAsFactors = FALSE),
-    validators_next <- read.csv(url(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i] + 1, ".csv", sep=(""))),stringsAsFactors = FALSE),
+    validators <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i], ".csv", sep=("")),stringsAsFactors = FALSE),
+    validators_next <- read.csv(paste("https://storage.googleapis.com/watcher-csv-exporter/", chain , "_validators_era_", x[i] + 1, ".csv", sep=("")),stringsAsFactors = FALSE),
     error = function(e){
       print("There was an Error")
       missing_validator <<- missing_validator + 1
